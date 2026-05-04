@@ -1,0 +1,128 @@
+#1.
+SELECT DISTINCT ap.number
+FROM airplanes ap, airlines_has_airplanes aha, airlines al
+WHERE ap.id = aha.airplanes_id
+AND aha.airlines_id = al.id
+AND ap.manufacturer = 'Airbus'
+AND al.name = 'Lufthansa';
+
+#2.
+SELECT DISTINCT al.name 
+FROM airlines al, routes r, airports aps, airports apd
+WHERE al.id = r.airlines_id 
+AND r.source_id = aps.id 
+AND r.destination_id = apd.id 
+AND aps.city = 'Athens' 
+AND apd.city = 'Prague';
+
+#3.
+SELECT COUNT(DISTINCT p.id) 
+FROM passengers p, flights_has_passengers fhp, flights f, routes r, airlines al
+WHERE al.name = 'Aegean Airlines'
+AND al.id = r.airlines_id
+AND r.id = f.routes_id
+AND f.id = fhp.flights_id
+AND fhp.passengers_id = p.id
+AND f.date = '2012-02-19';
+
+#4.
+SELECT 'yes'
+FROM airlines al, routes r, airports aps, airports apd, flights f
+WHERE al.name = 'Olympic Airways'
+AND aps.name = 'Athens El. Venizelos'
+AND apd.name = 'London Gatwick'
+AND f.date = '2014-12-12'
+AND al.id = r.airlines_id
+AND r.source_id = aps.id
+AND r.destination_id = apd.id
+AND r.id = f.routes_id
+
+UNION
+
+SELECT 'no'
+WHERE NOT EXISTS (
+  SELECT 1 FROM airlines al, routes r, airports aps, airports apd, flights f
+  WHERE al.name = 'Olympic Airways'
+  AND aps.name = 'Athens El. Venizelos'
+  AND apd.name = 'London Gatwick'
+  AND f.date = '2014-12-12'
+  AND al.id = r.airlines_id
+  AND r.source_id = aps.id
+  AND r.destination_id = apd.id
+  AND r.id = f.routes_id
+);
+
+#5.
+SELECT avg(2026 - p.year_of_birth)
+FROM passengers p, flights_has_passengers fhp, flights f, routes r, airports ap
+WHERE p.id = fhp.passengers_id
+AND fhp.flights_id = f.id
+AND f.routes_id = r.id
+AND r.destination_id = ap.id
+AND ap.city = 'Berlin';
+
+#6.
+SELECT DISTINCT p.name, p.surname
+FROM passengers p, flights_has_passengers fhp
+WHERE p.id = fhp.passengers_id
+AND p.id NOT IN (
+SELECT fhp1.passengers_id
+FROM flights_has_passengers fhp1, flights f1, flights_has_passengers fhp2, flights f2
+WHERE fhp1.passengers_id = fhp2.passengers_id
+AND fhp1.flights_id = f1.id
+AND fhp2.flights_id = f2.id
+AND f1.airplanes_id <> f2.airplanes_id
+);
+
+#7.
+SELECT DISTINCT ap1.city, ap2.city
+FROM flights f, routes r, airports ap1, airports ap2, flights_has_passengers fhp
+WHERE f.routes_id = r.id
+AND r.source_id = ap1.id
+AND r.destination_id = ap2.id
+AND f.id = fhp.flights_id
+AND f.date BETWEEN '2010-03-01' AND '2014-07-17'
+GROUP BY f.id, ap1.city, ap2.city
+HAVING COUNT(fhp.passengers_id) > 5;
+
+#8.
+SELECT al.name, al.code, COUNT(DISTINCT r.id)
+FROM airlines al, airlines_has_airplanes aha, routes r
+WHERE al.id = aha.airlines_id
+AND al.id = r.airlines_id
+GROUP BY al.id, al.name, al.code
+HAVING COUNT(DISTINCT aha.airplanes_id) = 4;
+
+#9.
+SELECT p.name, p.surname
+FROM passengers p
+WHERE NOT EXISTS (
+    SELECT al.id FROM airlines al WHERE al.active = 'Y'
+    AND al.id NOT IN (
+        SELECT r.airlines_id
+        FROM flights_has_passengers fhp, flights f, routes r
+        WHERE fhp.passengers_id = p.id
+        AND fhp.flights_id = f.id
+        AND f.routes_id = r.id
+    )
+);
+
+#10.
+SELECT p.name, p.surname
+FROM passengers p, flights_has_passengers fhp, flights f, routes r, airlines al
+WHERE p.id = fhp.passengers_id 
+AND fhp.flights_id = f.id 
+AND f.routes_id = r.id 
+AND r.airlines_id = al.id
+AND al.name = 'Aegean Airlines'
+AND f.date BETWEEN '2011-01-02' AND '2013-12-31'
+AND p.id NOT IN (
+    SELECT fhp2.passengers_id 
+    FROM flights_has_passengers fhp2, flights f2, routes r2, airlines al2
+    WHERE fhp2.flights_id = f2.id 
+    AND f2.routes_id = r2.id 
+    AND r2.airlines_id = al2.id
+    AND al2.name <> 'Aegean Airlines'
+)
+GROUP BY p.id, p.name, p.surname
+HAVING COUNT(f.id) > 1;
