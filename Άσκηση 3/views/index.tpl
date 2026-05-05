@@ -9,7 +9,7 @@
     
     <hr>
     <h3>Ερώτημα 1: Εύρεση Εταιρείας ανά Ηλικία</h3>
-    <form action="/query1" method="post">
+    <form action="/findAirlinebyAge" method="post">
         Ηλικία από: <input type="number" name="age_min" required>
         έως: <input type="number" name="age_max" required>
         <button type="submit">Αναζήτηση</button>
